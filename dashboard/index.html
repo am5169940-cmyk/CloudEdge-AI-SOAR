@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudEdge-AI-SOAR | SOC Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="p-6">
+    <!-- Top Header -->
+    <header class="flex justify-between items-center mb-8 pb-4 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+            <span class="text-3xl">🛡️</span>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">CloudEdge-AI-SOAR</h1>
+                <p class="text-xs text-slate-400">Edge-Native Threat Detection & Automated Response</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                ● Gateway Online
+            </span>
+            <button onclick="fetchEvents()" class="px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 rounded-lg transition-all">
+                🔄 Refresh Stream
+            </button>
+        </div>
+    </header>
+
+    <!-- Metrics Overview Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="glass-card p-5 rounded-xl">
+            <p class="text-xs font-medium text-slate-400">Total Ingested Events</p>
+            <h3 class="text-3xl font-extrabold text-white mt-2" id="metric-total">0</h3>
+        </div>
+        <div class="glass-card p-5 rounded-xl border-l-4 border-red-500">
+            <p class="text-xs font-medium text-slate-400">High / Critical Threats</p>
+            <h3 class="text-3xl font-extrabold text-red-400 mt-2" id="metric-critical">0</h3>
+        </div>
+        <div class="glass-card p-5 rounded-xl border-l-4 border-amber-500">
+            <p class="text-xs font-medium text-slate-400">Brute Force Attempts</p>
+            <h3 class="text-3xl font-extrabold text-amber-400 mt-2" id="metric-bruteforce">0</h3>
+        </div>
+        <div class="glass-card p-5 rounded-xl border-l-4 border-purple-500">
+            <p class="text-xs font-medium text-slate-400">Automated SOAR Blocks</p>
+            <h3 class="text-3xl font-extrabold text-purple-400 mt-2" id="metric-blocks">0</h3>
+        </div>
+    </div>
+
+    <!-- Main Content Split -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Live Alerts Table (2 Cols) -->
+        <div class="lg:col-span-2 glass-card p-6 rounded-xl">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span>🚨</span> Real-time Security Events
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="text-slate-400 border-b border-slate-700">
+                        <tr>
+                            <th class="pb-3">Timestamp</th>
+                            <th class="pb-3">Event Type</th>
+                            <th class="pb-3">Source IP</th>
+                            <th class="pb-3">Severity</th>
+                            <th class="pb-3">SOAR Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alerts-table-body" class="divide-y divide-slate-800 text-slate-300">
+                        <tr>
+                            <td colspan="5" class="py-6 text-center text-slate-500">Awaiting stream connection...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Threat Visualizer Chart (1 Col) -->
+        <div class="glass-card p-6 rounded-xl">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span>📊</span> Threat Breakdown
+            </h2>
+            <canvas id="threatChart" class="w-full h-64"></canvas>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Threat Distribution Chart
+        const ctx = document.getElementById('threatChart').getContext('2d');
+        const threatChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['SSH Failed', 'SQL Injection', 'Port Scan', 'Clean Logs'],
+                datasets: [{
+                    data: [12, 5, 3, 45],
+                    backgroundColor: ['#f59e0b', '#ef4444', '#a855f7', '#10b981'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                plugins: { legend: { labels: { color: '#94a3b8' }, position: 'bottom' } },
+                responsive: true
+            }
+        });
+
+        // Sample Log Fetcher Simulation
+        function fetchEvents() {
+            const mockData = [
+                { time: new Date().toLocaleTimeString(), type: 'ssh_failed_login', ip: '192.168.1.100', severity: 'HIGH', status: 'Blocked by Worker' },
+                { time: new Date().toLocaleTimeString(), type: 'sql_injection', ip: '10.0.0.5', severity: 'CRITICAL', status: 'IP Quarantined' },
+                { time: new Date().toLocaleTimeString(), type: 'web_access', ip: '172.16.0.2', severity: 'INFO', status: 'Passed' }
+            ];
+
+            const tbody = document.getElementById('alerts-table-body');
+            tbody.innerHTML = '';
+
+            mockData.forEach(item => {
+                const badgeColor = item.severity === 'CRITICAL' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                 item.severity === 'HIGH' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                                 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/50">
+                        <td class="py-3 font-mono">${item.time}</td>
+                        <td class="py-3 font-semibold text-white">${item.type}</td>
+                        <td class="py-3 font-mono">${item.ip}</td>
+                        <td class="py-3"><span class="px-2 py-0.5 rounded border ${badgeColor}">${item.severity}</span></td>
+                        <td class="py-3 text-purple-400 font-medium">${item.status}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('metric-total').innerText = '65';
+            document.getElementById('metric-critical').innerText = '5';
+            document.getElementById('metric-bruteforce').innerText = '12';
+            document.getElementById('metric-blocks').innerText = '17';
+        }
+
+        fetchEvents();
+    </script>
+</body>
+</html>
