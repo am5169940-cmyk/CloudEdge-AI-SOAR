@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # 1. Log Ingestion Agent
+  log-agent:
+    build:
+      context: ./log-agent
+      dockerfile: Dockerfile
+    container_name: soar-log-agent
+    restart: unless-stopped
+    environment:
+      - HMAC_SECRET=super-secret-hmac-key
+      - GATEWAY_URL=https://cloud-edge-gateway.workers.dev/api/v1/logs
+    volumes:
+      - /var/log:/var/log:ro  # Mount host logs for analysis
+
+  # 2. SOC Dashboard Interface
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: soar-dashboard
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+
+networks:
+  default:
+    name: soar-network
