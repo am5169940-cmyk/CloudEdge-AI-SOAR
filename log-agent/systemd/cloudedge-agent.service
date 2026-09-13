@@ -1,0 +1,32 @@
+[Unit]
+Description=CloudEdge-AI-SOAR Log Agent
+Documentation=https://github.com/YOUR_ORG/CloudEdge-AI-SOAR
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=cloudedge
+Group=adm
+# 'adm' group membership grants read access to /var/log/* on Debian/Ubuntu
+# without running as root.
+
+WorkingDirectory=/opt/cloudedge-agent
+EnvironmentFile=/etc/cloudedge-agent/agent.env
+ExecStart=/opt/cloudedge-agent/venv/bin/python src/main.py --config config/config.yaml
+
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/cloudedge-agent
+ReadOnlyPaths=/var/log
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

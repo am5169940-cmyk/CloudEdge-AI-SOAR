@@ -1,0 +1,40 @@
+# CloudEdge-AI-SOAR log-agent configuration
+# Secrets below are placeholders for local dev only — in production, set
+# CLOUDEDGE_HMAC_SECRET / CLOUDEDGE_AES_KEY_B64 / CLOUDEDGE_ENDPOINT as
+# environment variables (e.g. via systemd EnvironmentFile or Docker secrets)
+# instead of committing real keys to this file.
+
+agent:
+  hostname: ""                 # empty = auto-detect via socket.gethostname()
+  state_file: "/var/lib/cloudedge-agent/state.json"
+  log_level: "INFO"
+  poll_interval_seconds: 1.0
+  read_chunk_bytes: 65536
+  queue_max_size: 10000
+
+sources:
+  - name: "system-syslog"
+    type: "syslog"
+    path: "/var/log/syslog"
+    enabled: true
+
+  - name: "auth-log"
+    type: "auth"
+    path: "/var/log/auth.log"
+    enabled: true
+
+  - name: "nginx-access"
+    type: "web"
+    path: "/var/log/nginx/access.log"
+    enabled: true
+
+shipper:
+  endpoint: "https://cloudedge-gateway.example.workers.dev/ingest"
+  hmac_secret: "CHANGE_ME_dev_only_hmac_secret"
+  aes_key_b64: "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE="  # 32 random bytes, base64 — regenerate for real use
+  batch_size: 50
+  batch_interval_seconds: 5.0
+  max_retries: 5
+  backoff_base_seconds: 1.5
+  request_timeout_seconds: 10.0
+  verify_tls: true

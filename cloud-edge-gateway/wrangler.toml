@@ -1,0 +1,15 @@
+name = "cloudedge-gateway"
+main = "src/index.ts"
+compatibility_date = "2024-03-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "soar-db"
+database_id = "your-d1-database-id-here"
+
+[ai]
+binding = "AI"
+
+[vars]
+HMAC_SECRET = "super-secret-hmac-key"
+API_KEY = "secure-agent-api-key-here"
